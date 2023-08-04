@@ -1,11 +1,24 @@
 const express = require("express");
 const cors = require("cors");
 const app = express();
-const models = require('./models')
+const models = require('./models');
+const multer = require('multer');
 const port = "8080";
+const upload = multer({
+  storage: multer.diskStorage({
+    destination:function( req , file , cb ){
+      cb(null, "uploads/");
+    },
+    filename: function(req, file, cb){
+      cb( null, file.originalname )
+    }
+  })
+  
+})//파일처리
 
 app.use(express.json());
 app.use(cors()); // 브라우저의 cors 이슈를 막기 위해 사용하는 코드.
+app.use('/uploads', express.static("uploads"))
 app.get("/products", (req, res) => {
   models.Product.findAll(
     {
@@ -22,14 +35,17 @@ app.get("/products", (req, res) => {
     })
   }).catch((error)=>{
     console.error(error)
-    res.send('문제발생')
+    res.status(400).send('에러발생')
+
   })
 });
 
 app.post("/products", (req, res) => {
   const body = req.body;
   const { name, price, seller, imageUrl, description } = body;
-  
+  if(!name || !price || !seller || !imageUrl || !description){
+    res.send('모든필드를 입력해주세요.')
+  }
   models.Product.create({
     name,
     price,
@@ -44,7 +60,7 @@ app.post("/products", (req, res) => {
   }).catch((err)=>{
   
     console.error(err);
-    res.send('문제발생');
+    res.status(400).send('에러발생')
   
   });
   
@@ -71,6 +87,13 @@ app.get("/products/:id",(req,res)=>{
       res.send('상품조회가 에러 발생');
 
     })
+});
+
+app.post('/image', upload.single('image'), ( req, res ) =>{
+  const file = req.file;
+  res.send({
+    imageUrl: file.path
+  })
 })
 
 app.listen(port, () => {
