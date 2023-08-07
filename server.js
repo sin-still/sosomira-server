@@ -114,6 +114,26 @@ app.post("/purchase/:id",(req,res)=>{
   })
 
 })
+app.delete("/products/:id", (req, res) => {
+  const { id } = req.params;
+
+  models.Product.destroy({
+    where: {
+      id: id,
+    },
+  })
+    .then((result) => {
+      if (result === 0) {
+        res.status(404).send("해당 상품을 찾을 수 없습니다.");
+      } else {
+        res.send({ message: "상품을 삭제하였습니다." });
+      }
+    })
+    .catch((err) => {
+      console.error(err);
+      res.status(500).send("에러 발생");
+    });
+});
 
 app.post('/image', upload.single('image'), ( req, res ) =>{
   const file = req.file;
