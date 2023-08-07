@@ -25,7 +25,7 @@ app.get("/products", (req, res) => {
       order:[
         ['createdAt', 'DESC'] //오름차순 : ASC 내림차 순 : DESC 
       ],
-      attributes:['id','name','price','seller','imageUrl','createdAt']
+      attributes:['id','name','price','seller','imageUrl','createdAt','soldout',]
     }
   )
   .then((result)=>{
@@ -88,6 +88,32 @@ app.get("/products/:id",(req,res)=>{
 
     })
 });
+app.post("/purchase/:id",(req,res)=>{
+  const {id} = req.params;
+  models.Product.update(
+    {
+      soldout: 1,
+    },
+    {
+      where: {
+        id,
+      }
+    }
+  )
+  .then( (result) =>{
+
+    res.send({
+      result :true,     //true는 1 false 는 0
+    })
+
+  }).catch((error)=>{
+
+    console.error(error)
+    res.status(500).send('에러발생')
+
+  })
+
+})
 
 app.post('/image', upload.single('image'), ( req, res ) =>{
   const file = req.file;
