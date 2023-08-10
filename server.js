@@ -25,7 +25,7 @@ app.get("/products", (req, res) => {
       order:[
         ['createdAt', 'DESC'] //오름차순 : ASC 내림차 순 : DESC 
       ],
-      attributes:['id','name','price','seller','imageUrl','createdAt','soldout',]
+      attributes:['id','name','price','seller','imageUrl','createdAt','soldout','category']
     }
   )
   .then((result)=>{
@@ -42,8 +42,8 @@ app.get("/products", (req, res) => {
 
 app.post("/products", (req, res) => {
   const body = req.body;
-  const { name, price, seller, imageUrl, description } = body;
-  if(!name || !price || !seller || !imageUrl || !description){
+  const { name, price, seller, imageUrl, description, category } = body;
+  if(!name || !price || !seller || !imageUrl || !description || !category){
     res.send('모든필드를 입력해주세요.')
   }
   models.Product.create({
@@ -51,7 +51,9 @@ app.post("/products", (req, res) => {
     price,
     seller,
     imageUrl,
-    description
+    description,
+    category
+
   }).then( (result) =>{
 
     console.log('상품생성 결과:', result);
