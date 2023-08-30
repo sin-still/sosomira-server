@@ -144,6 +144,32 @@ app.post('/image', upload.single('image'), ( req, res ) =>{
   })
 })
 
+
+// 회원가입
+app.post("/users", (req, res) => {
+  const body = req.body;
+  const { user_id, pw, name, phone, email, birth, marketingChecked } = body;
+  if(!user_id || !pw || !name || !phone || !email || !birth || !marketingChecked){
+    res.send('모든필드를 입력해주세요.')
+  }
+  models.User.create({
+    user_id,
+    pw,
+    name,
+    phone,
+    email,
+    birth,
+    marketingChecked
+  }).then( (result) =>{
+    console.log('회원가입 성공 결과:', result);
+    res.send({result, })
+    }).catch((err)=>{
+      console.error(err);
+    res.status(400).send('회원가입 server입력 실패')
+    });
+})
+
+
 app.listen(port, () => {
   models.sequelize.sync()
   .then(()=>{
