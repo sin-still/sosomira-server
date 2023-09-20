@@ -25,7 +25,7 @@ app.get("/products", (req, res) => {
       order:[
         ['createdAt', 'DESC'] //오름차순 : ASC 내림차 순 : DESC 
       ],
-      attributes:['id','name','price','seller','imageUrl','createdAt','soldout',]
+      attributes:['id','name','price','seller','imageUrl','createdAt','soldout','category']
     }
   )
   .then((result)=>{
@@ -42,8 +42,8 @@ app.get("/products", (req, res) => {
 
 app.post("/products", (req, res) => {
   const body = req.body;
-  const { name, price, seller, imageUrl, description } = body;
-  if(!name || !price || !seller || !imageUrl || !description){
+  const { name, price, seller, imageUrl, description, category } = body;
+  if(!name || !price || !seller || !imageUrl || !description || !category){
     res.send('모든필드를 입력해주세요.')
   }
   models.Product.create({
@@ -51,7 +51,9 @@ app.post("/products", (req, res) => {
     price,
     seller,
     imageUrl,
-    description
+    description,
+    category
+
   }).then( (result) =>{
 
     console.log('상품생성 결과:', result);
@@ -141,6 +143,32 @@ app.post('/image', upload.single('image'), ( req, res ) =>{
     imageUrl: file.path
   })
 })
+
+
+// 회원가입
+app.post("/users", (req, res) => {
+  const body = req.body;
+  const { user_id, pw, name, phone, email, birth, marketingChecked } = body;
+  if(!user_id || !pw || !name || !phone || !email || !birth || !marketingChecked){
+    res.send('모든필드를 입력해주세요.')
+  }
+  models.User.create({
+    user_id,
+    pw,
+    name,
+    phone,
+    email,
+    birth,
+    marketingChecked
+  }).then( (result) =>{
+    console.log('회원가입 성공 결과:', result);
+    res.send({result, })
+    }).catch((err)=>{
+      console.error(err);
+    res.status(400).send('회원가입 server입력 실패')
+    });
+})
+
 
 app.listen(port, () => {
   models.sequelize.sync()
