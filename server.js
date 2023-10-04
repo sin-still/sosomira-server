@@ -4,6 +4,9 @@ const app = express();
 const models = require('./models');
 const multer = require('multer');
 const port = "8080";
+const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const secretKey = crypto.randomBytes(32).toString('hex');
 const upload = multer({
   storage: multer.diskStorage({
     destination:function( req , file , cb ){
@@ -13,11 +16,14 @@ const upload = multer({
       cb( null, file.originalname )
     }
   })
-  
 })//파일처리
 
+
 app.use(express.json());
-app.use(cors()); // 브라우저의 cors 이슈를 막기 위해 사용하는 코드.
+app.use(cors({
+  origin: ['http://localhost:3000', 'https://sosomira.com'], // 허용하는 출처 목록
+  credentials: true, // 인증 정보 전송 허용
+})); // 브라우저의 cors 이슈를 막기 위해 사용하는 코드.
 app.use('/uploads', express.static("uploads"))
 app.get("/products", (req, res) => {
   models.Product.findAll(
@@ -90,6 +96,7 @@ app.get("/products/:id",(req,res)=>{
 
     })
 });
+
 app.post("/purchase/:id",(req,res)=>{
   const {id} = req.params;
   models.Product.update(
@@ -167,6 +174,83 @@ app.post("/users", (req, res) => {
       console.error(err);
     res.status(400).send('회원가입 server입력 실패')
     });
+})
+
+// 로그인
+app.post("/users/login",(req,res)=>{
+  const body =req.body;
+  const {user_id, pw} = body;
+  models.User.findOne({
+    where:{
+      user_id : user_id,
+    }
+  })
+  .then((result)=>{
+    console.log('result.id:'+result.user_id+"user_id:"+user_id+"result.pw:"+result.pw+"pw"+pw);
+    console.log("result"+result);
+    if(result.user_id == user_id && result.pw == pw){
+      console.log("로그인 정보 성공");
+      const user = {
+        id: user_id,
+        username: user_id
+      }
+      //AccessToken 생성
+      const accessToken = jwt.sign(user, secretKey, {expiresIn: '1h'})
+      res.send({
+        user: result.user_id,
+        accessToken: accessToken
+      });
+    } else{
+      console.log("로그인 실패")
+      res.send({user: 'False'});
+    }
+  }).catch((err)=>{
+    console.error(err);
+    res.send('유저 정보 에러 발생' + err);
+  })
+});
+
+// 중복 아이디 확인
+app.get("/users/:id",(req,res)=>{
+  const params = req.params;
+  const {id} = params;
+  models.User.findOne({
+    where:{
+      user_id:id,
+    }
+  })
+  .then((result)=>{
+    console.log('user_result:',result);
+    res.send({
+      user:result
+    })
+
+  }).catch((err)=>{
+    console.error(err);
+    res.send({user:'ERR_IN_USERS_ID', error: err});
+
+  })
+});
+
+
+app.post("/auth", (req, res) => {
+  const body = req.body;
+  const { accessToken } = body;
+  if(!accessToken){
+    res.send(false)
+  } else {
+    try {
+      const decoded = jwt.verify(accessToken, secretKey); // AccessToken을 검증하고 디코딩
+        // 서명 검증 및 만료 시간(exp) 확인
+      if (decoded && decoded.exp > Math.floor(Date.now() / 1000)) {
+        res.send({result: decoded})
+      } else {
+        res.send({result:"검증 실패"} )
+      }
+    } catch (error) {
+      res.send({result: error}); // 검증에 실패하면 유효하지 않음
+    }
+  }
 })
 
 
